@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     function generateRandomString($length = 4) {
-        return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
+        return substr(str_shuffle('0123456789'), 0, $length);
     }
 
     if (count($urls) === 1 && empty($_FILES['file'])) {
