@@ -5,6 +5,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $urls = [];
+    $convertToWebP = isset($_POST['convertToWebP']); // Check if the checkbox was selected
 
     // Process single link input
     if (!empty($_POST['singleLink'])) {
@@ -92,23 +93,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($fileContent !== false) {
             file_put_contents($filePath, $fileContent);
 
-            // Convert to WebP
-            $webpPath = $webpFolder . DIRECTORY_SEPARATOR . $fileInfo['filename'] . '-' . $randomString . '.webp';
-            if (!convertImageToWebP($filePath, $webpPath)) {
-                echo "Failed to convert $filePath to WebP.\n";
+            if ($convertToWebP) {
+                // Convert to WebP if the option is selected
+                $webpPath = $webpFolder . DIRECTORY_SEPARATOR . $fileInfo['filename'] . '-' . $randomString . '.webp';
+                if (!convertImageToWebP($filePath, $webpPath)) {
+                    echo "Failed to convert $filePath to WebP.\n";
+                }
             }
         }
     }
 
-    // Create a ZIP file for WebP images
+    // Create a ZIP file for downloaded files (either original or WebP)
     $zip = new ZipArchive();
     $zipFileName = 'media_files-' . generateRandomString() . '.zip';
+    $folderToZip = $convertToWebP ? $webpFolder : $mediaFolder;
 
     if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-        $files = scandir($webpFolder);
+        $files = scandir($folderToZip);
         foreach ($files as $file) {
             if ($file !== '.' && $file !== '..') {
-                $zip->addFile($webpFolder . DIRECTORY_SEPARATOR . $file, $file);
+                $zip->addFile($folderToZip . DIRECTORY_SEPARATOR . $file, $file);
             }
         }
         $zip->close();

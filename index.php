@@ -111,6 +111,11 @@
                 <input type="url" name="singleLink" id="singleLink" class="form-control" placeholder="https://example.com/image.jpg">
             </div>
 
+            <div class="form-group form-check">
+                <input type="checkbox" name="convertToWebP" id="convertToWebP" class="form-check-input">
+                <label for="convertToWebP" class="form-check-label">Convert to WebP</label>
+            </div>
+
             <button type="submit" class="btn-submit">Download Media</button>
         </form>
     </div>
