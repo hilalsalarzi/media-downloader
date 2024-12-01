@@ -2,6 +2,8 @@
 
 A versatile PHP application to automate the downloading and organizing of media files (images, videos, etc.) from multiple URLs. This tool supports different input formats like JSON, Excel (XLSX), and TXT files, making it suitable for various use cases, including e-commerce platforms, data analysis, data collection, and more.
 
+![Media Downloader](assets/images/media-downloader-hilalsalarzi.png)
+
 ## Features
 - **Multi-format support**: Upload media links from JSON, Excel (XLSX), or TXT files.
 - **Automatic download**: Downloads media files (images, videos, etc.) from the provided URLs.
