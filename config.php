@@ -46,69 +46,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return substr(str_shuffle('0123456789'), 0, $length);
     }
 
-    if (count($urls) === 1 && empty($_FILES['file'])) {
-        // Handle single link directly
-        $url = $urls[0];
+    function convertImageToWebP($sourcePath, $destinationPath, $quality = 80) {
+        $info = getimagesize($sourcePath);
+        if ($info === false) return false;
+
+        $mime = $info['mime'];
+        $image = null;
+
+        // Create an image resource based on MIME type
+        switch ($mime) {
+            case 'image/jpeg':
+                $image = imagecreatefromjpeg($sourcePath);
+                break;
+            case 'image/png':
+                $image = imagecreatefrompng($sourcePath);
+                imagepalettetotruecolor($image);
+                imagealphablending($image, true);
+                imagesavealpha($image, true);
+                break;
+            case 'image/gif':
+                $image = imagecreatefromgif($sourcePath);
+                break;
+            default:
+                return false; // Unsupported type
+        }
+
+        // Save the image as WebP
+        $result = imagewebp($image, $destinationPath, $quality);
+        imagedestroy($image); // Free memory
+        return $result;
+    }
+
+    $mediaFolder = 'media_downloads';
+    $webpFolder = 'webp_downloads';
+    if (!is_dir($mediaFolder)) mkdir($mediaFolder, 0777, true);
+    if (!is_dir($webpFolder)) mkdir($webpFolder, 0777, true);
+
+    foreach ($urls as $url) {
         $fileInfo = pathinfo($url);
         $randomString = generateRandomString();
         $filename = $fileInfo['filename'] . '-' . $randomString . '.' . $fileInfo['extension'];
+        $filePath = $mediaFolder . DIRECTORY_SEPARATOR . $filename;
 
         $fileContent = file_get_contents($url);
         if ($fileContent !== false) {
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            echo $fileContent;
-            exit;
-        } else {
-            echo 'Failed to download the file.';
-            exit;
+            file_put_contents($filePath, $fileContent);
+
+            // Convert to WebP
+            $webpPath = $webpFolder . DIRECTORY_SEPARATOR . $fileInfo['filename'] . '-' . $randomString . '.webp';
+            if (!convertImageToWebP($filePath, $webpPath)) {
+                echo "Failed to convert $filePath to WebP.\n";
+            }
         }
+    }
+
+    // Create a ZIP file for WebP images
+    $zip = new ZipArchive();
+    $zipFileName = 'media_files-' . generateRandomString() . '.zip';
+
+    if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        $files = scandir($webpFolder);
+        foreach ($files as $file) {
+            if ($file !== '.' && $file !== '..') {
+                $zip->addFile($webpFolder . DIRECTORY_SEPARATOR . $file, $file);
+            }
+        }
+        $zip->close();
+
+        // Serve the ZIP file for download
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
+        header('Content-Length: ' . filesize($zipFileName));
+        readfile($zipFileName);
+
+        // Clean up temporary files
+        unlink($zipFileName);
+        array_map('unlink', glob("$mediaFolder/*.*"));
+        array_map('unlink', glob("$webpFolder/*.*"));
+        rmdir($mediaFolder);
+        rmdir($webpFolder);
+        exit;
     } else {
-        // Handle multiple URLs and create a zip file
-        $mediaFolder = 'media_downloads';
-        if (!is_dir($mediaFolder)) {
-            mkdir($mediaFolder, 0777, true);
-        }
-
-        foreach ($urls as $url) {
-            $fileInfo = pathinfo($url);
-            $randomString = generateRandomString();
-            $filename = $fileInfo['filename'] . '-' . $randomString . '.' . $fileInfo['extension'];
-            $filePath = $mediaFolder . DIRECTORY_SEPARATOR . $filename;
-
-            $fileContent = file_get_contents($url);
-            if ($fileContent !== false) {
-                file_put_contents($filePath, $fileContent);
-            }
-        }
-
-        // Create a zip file
-        $zip = new ZipArchive();
-        $zipFileName = 'media_files-' . generateRandomString() . '.zip';
-
-        if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            $files = scandir($mediaFolder);
-            foreach ($files as $file) {
-                if ($file !== '.' && $file !== '..') {
-                    $zip->addFile($mediaFolder . DIRECTORY_SEPARATOR . $file, $file);
-                }
-            }
-            $zip->close();
-
-            // Serve the zip file for download
-            header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
-            header('Content-Length: ' . filesize($zipFileName));
-            readfile($zipFileName);
-
-            // Clean up temporary files
-            unlink($zipFileName);
-            array_map('unlink', glob("$mediaFolder/*.*"));
-            rmdir($mediaFolder);
-            exit;
-        } else {
-            echo 'Failed to create zip file.';
-        }
+        echo 'Failed to create zip file.';
     }
 }
 ?>
