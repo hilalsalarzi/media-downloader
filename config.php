@@ -1,7 +1,5 @@
 <?php
-// require 'vendor/autoload.php'; // Include for Excel handling via PhpSpreadsheet
-require 'assets/plugins/composer/vendor/autoload.php'; // Add semicolon at the end
-
+require 'assets/plugins/composer/vendor/autoload.php'; // Ensure correct path to PhpSpreadsheet
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -44,49 +42,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Download media files
-    $mediaFolder = 'media_downloads';
-    if (!is_dir($mediaFolder)) {
-        mkdir($mediaFolder, 0777, true);
+    function generateRandomString($length = 4) {
+        return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, $length);
     }
 
-    foreach ($urls as $url) {
+    if (count($urls) === 1 && empty($_FILES['file'])) {
+        // Handle single link directly
+        $url = $urls[0];
         $fileInfo = pathinfo($url);
-        $filename = uniqid() . '_' . $fileInfo['basename'];
-        $filePath = $mediaFolder . DIRECTORY_SEPARATOR . $filename;
+        $randomString = generateRandomString();
+        $filename = $fileInfo['filename'] . '-' . $randomString . '.' . $fileInfo['extension'];
 
         $fileContent = file_get_contents($url);
         if ($fileContent !== false) {
-            file_put_contents($filePath, $fileContent);
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            echo $fileContent;
+            exit;
+        } else {
+            echo 'Failed to download the file.';
+            exit;
         }
-    }
+    } else {
+        // Handle multiple URLs and create a zip file
+        $mediaFolder = 'media_downloads';
+        if (!is_dir($mediaFolder)) {
+            mkdir($mediaFolder, 0777, true);
+        }
 
-    // Create a zip file
-    $zip = new ZipArchive();
-    $zipFileName = 'media_files.zip';
+        foreach ($urls as $url) {
+            $fileInfo = pathinfo($url);
+            $randomString = generateRandomString();
+            $filename = $fileInfo['filename'] . '-' . $randomString . '.' . $fileInfo['extension'];
+            $filePath = $mediaFolder . DIRECTORY_SEPARATOR . $filename;
 
-    if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-        $files = scandir($mediaFolder);
-        foreach ($files as $file) {
-            if ($file !== '.' && $file !== '..') {
-                $zip->addFile($mediaFolder . DIRECTORY_SEPARATOR . $file, $file);
+            $fileContent = file_get_contents($url);
+            if ($fileContent !== false) {
+                file_put_contents($filePath, $fileContent);
             }
         }
-        $zip->close();
 
-        // Serve the zip file for download
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
-        header('Content-Length: ' . filesize($zipFileName));
-        readfile($zipFileName);
+        // Create a zip file
+        $zip = new ZipArchive();
+        $zipFileName = 'media_files-' . generateRandomString() . '.zip';
 
-        // Clean up temporary files
-        unlink($zipFileName);
-        array_map('unlink', glob("$mediaFolder/*.*"));
-        rmdir($mediaFolder);
-        exit;
-    } else {
-        echo 'Failed to create zip file.';
+        if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            $files = scandir($mediaFolder);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $zip->addFile($mediaFolder . DIRECTORY_SEPARATOR . $file, $file);
+                }
+            }
+            $zip->close();
+
+            // Serve the zip file for download
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
+            header('Content-Length: ' . filesize($zipFileName));
+            readfile($zipFileName);
+
+            // Clean up temporary files
+            unlink($zipFileName);
+            array_map('unlink', glob("$mediaFolder/*.*"));
+            rmdir($mediaFolder);
+            exit;
+        } else {
+            echo 'Failed to create zip file.';
+        }
     }
 }
 ?>
