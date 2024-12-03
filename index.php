@@ -118,7 +118,7 @@
 
             <button type="submit" class="btn-submit">Download Media</button>
         </form>
-        <button href="converter.php"> Converter</button>
+        <a href="converter.php" class="btn btn-primary pt-4">Converter</a>
     </div>
 
     <!-- Bootstrap 5 JS and dependencies -->
