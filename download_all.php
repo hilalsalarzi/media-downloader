@@ -1,7 +1,9 @@
 <?php
 if (isset($_POST['images']) && is_array($_POST['images'])) {
     $images = $_POST['images'];
-    $zipFile = 'selected_images.zip';
+    $baseName = isset($_GET['baseName']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['baseName']) : 'images';
+    $zipFile = $baseName . '.zip';
+    
 
     $zip = new ZipArchive();
     if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
