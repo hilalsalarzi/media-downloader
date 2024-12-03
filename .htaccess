@@ -1,0 +1,25 @@
+# Enable PHP file handling
+AddHandler application/x-httpd-php .php
+
+# Set the default index file
+DirectoryIndex index.php index.html
+
+# Ensure that script files are not downloaded
+<FilesMatch "\.(php|phps|php5|php7|phtml)$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Enable mod_rewrite (if needed for clean URLs)
+RewriteEngine On
+
+# Example rewrite rule (optional): Uncomment to force HTTPS
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Error pages (optional)
+ErrorDocument 403 /403.html
+ErrorDocument 404 /404.html
+ErrorDocument 500 /500.html
