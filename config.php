@@ -62,7 +62,7 @@ function processFile($filePath, $fileName)
             $urls = array_merge($urls, $data); // Assuming JSON is an array of URLs
         }
     } elseif ($fileExtension === 'xlsx') {
-        require '/assets/plugins/composer/vendor/autoload.php'; // Load PHPExcel or similar library
+        require 'assets/plugins/composer/vendor/autoload.php'; // Load PHPExcel or similar library
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
         foreach ($worksheet->getRowIterator() as $row) {
