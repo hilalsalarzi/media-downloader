@@ -96,11 +96,10 @@
             }
         }
 
-        // Display converted images with checkboxes and download links
         if (!empty($convertedImages)) {
             echo '<div class="mt-4">';
             echo '<h3>Converted Images:</h3>';
-            echo '<form id="downloadForm">';
+            echo '<form action="download_all.php" method="POST" id="downloadForm">';
             echo '<div class="mb-3">';
             echo '<input type="checkbox" id="selectAll" class="form-check-input"> <label for="selectAll">Select All</label>';
             echo '</div>';
@@ -109,10 +108,10 @@
                 echo '<div class="col-md-3 text-center">';
                 echo '<input type="checkbox" name="images[]" value="' . $imagePath . '" class="form-check-input converted-image-checkbox">';
                 echo '<img src="' . $imagePath . '" class="img-thumbnail mb-2" alt="Converted Image">';
-                echo '<a href="' . $imagePath . '" class="btn btn-success w-100" download="' . basename($imagePath) . '">Download</a>';
                 echo '</div>';
             }
             echo '</div>';
+            echo '<button type="submit" class="btn btn-success w-100 mt-3">Download Selected</button>';
             echo '</form>';
             echo '</div>';
         } else {
@@ -121,6 +120,7 @@
     }
     ?>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Select All Checkbox
