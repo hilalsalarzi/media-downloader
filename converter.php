@@ -101,6 +101,7 @@
             echo '<h3>Converted Images:</h3>';
             echo '<form action="download_all.php" method="POST" id="downloadForm">';
             echo '<div class="mb-3">';
+            echo' <input type="hidden" name="baseName" value="' . $baseName . '">';
             echo '<input type="checkbox" id="selectAll" class="form-check-input"> <label for="selectAll">Select All</label>';
             echo '</div>';
             echo '<div class="row">';
