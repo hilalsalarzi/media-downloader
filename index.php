@@ -77,6 +77,14 @@
             <p>OR</p>
 
             <div class="form-group">
+                <label for="textareaLinks">Paste URLs (JSON Array):</label>
+                <textarea name="textareaLinks" id="textareaLinks" rows="5" class="form-control" 
+                    placeholder='[ "https://example.com/image1.jpg", "https://example.com/image2.jpg" ]'></textarea>
+            </div>
+
+            <p>OR</p>
+
+            <div class="form-group">
                 <label for="singleLink">Enter a Single URL:</label>
                 <input type="url" name="singleLink" id="singleLink" class="form-control" placeholder="https://example.com/image.jpg">
             </div>

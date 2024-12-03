@@ -15,7 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_POST['singleLink'])) {
         $urls[] = trim($_POST['singleLink']);
     }
-
+    if (!empty($_POST['textareaLinks'])) {
+        $textareaData = json_decode($_POST['textareaLinks'], true);
+        if (is_array($textareaData)) {
+            $urls = array_merge($urls, $textareaData);
+        }
+    }
     // Process uploaded file
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         $fileType = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
