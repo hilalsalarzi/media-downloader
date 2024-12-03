@@ -8,42 +8,126 @@
 </head>
 <body>
 <div class="container mt-5">
-    <h1 class="text-center">Image Converter</h1>
-    <form action="download_all.php" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <h1 class="text-center mb-4">Image Converter</h1>
+    <form action="" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
-            <label for="baseName" class="form-label">Base File Name</label>
-            <input type="text" class="form-control" id="baseName" name="baseName" placeholder="Enter base name (e.g., camera)" required>
+            <label class="form-label">Select Input Images:</label>
+            <input type="file" class="form-control" name="images[]" multiple accept="image/*" required>
         </div>
+
         <div class="mb-3">
-            <label for="images" class="form-label">Select Images</label>
-            <input type="file" class="form-control" id="images" name="images[]" multiple accept=".jpg,.jpeg,.png,.gif,.webp" required>
+            <label class="form-label">Enter Base File Name:</label>
+            <input type="text" class="form-control" name="baseName" placeholder="Enter base file name (e.g., camera)" required>
         </div>
+
         <div class="mb-3">
-            <label class="form-label">Convert To</label><br>
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" name="convertTo[]" value="jpg" id="jpg">
-                <label class="form-check-label" for="jpg">JPG</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" name="convertTo[]" value="png" id="png">
-                <label class="form-check-label" for="png">PNG</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" name="convertTo[]" value="jpeg" id="jpeg">
-                <label class="form-check-label" for="jpeg">JPEG</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" name="convertTo[]" value="gif" id="gif">
-                <label class="form-check-label" for="gif">GIF</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" name="convertTo[]" value="webp" id="webp">
-                <label class="form-check-label" for="webp">WEBP</label>
-            </div>
+            <label class="form-label">Select Output Format:</label>
+            <select name="outputExtension" class="form-select" required>
+                <option value="jpg">JPG</option>
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="gif">GIF</option>
+                <option value="webp">WEBP</option>
+            </select>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Convert and Download</button>
+
+        <button type="submit" class="btn btn-primary w-100" name="convert">Convert Images</button>
     </form>
+
+    <?php
+    if (isset($_POST['convert']) && isset($_FILES['images']) && isset($_POST['baseName'])) {
+        $outputExtension = $_POST['outputExtension'];
+        $baseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['baseName']); // Sanitize input
+        $uploadedFiles = $_FILES['images'];
+
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $convertedDir = 'converted/';
+
+        if (!is_dir($convertedDir)) mkdir($convertedDir, 0777, true);
+
+        $convertedImages = [];
+        $counter = 1;
+
+        foreach ($uploadedFiles['name'] as $index => $fileName) {
+            $tempPath = $uploadedFiles['tmp_name'][$index];
+            $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+            if (in_array($fileExt, $allowedExtensions)) {
+                $newFileName = $baseName . '_' . $counter . '.' . $outputExtension;
+                $outputPath = $convertedDir . $newFileName;
+
+                $image = null;
+                switch ($fileExt) {
+                    case 'jpg':
+                    case 'jpeg':
+                        $image = imagecreatefromjpeg($tempPath);
+                        break;
+                    case 'png':
+                        $image = imagecreatefrompng($tempPath);
+                        break;
+                    case 'gif':
+                        $image = imagecreatefromgif($tempPath);
+                        break;
+                    case 'webp':
+                        $image = imagecreatefromwebp($tempPath);
+                        break;
+                }
+
+                if ($image) {
+                    switch ($outputExtension) {
+                        case 'jpg':
+                        case 'jpeg':
+                            imagejpeg($image, $outputPath);
+                            break;
+                        case 'png':
+                            imagepng($image, $outputPath);
+                            break;
+                        case 'gif':
+                            imagegif($image, $outputPath);
+                            break;
+                        case 'webp':
+                            imagewebp($image, $outputPath);
+                            break;
+                    }
+                    imagedestroy($image);
+                    $convertedImages[] = $outputPath;
+                    $counter++;
+                }
+            }
+        }
+
+        if (!empty($convertedImages)) {
+            echo '<div class="mt-4">';
+            echo '<h3>Converted Images:</h3>';
+            echo '<form action="download_all.php" method="POST" id="downloadForm">';
+            echo '<div class="mb-3">';
+            echo '<input type="checkbox" id="selectAll" class="form-check-input"> <label for="selectAll">Select All</label>';
+            echo '</div>';
+            echo '<div class="row">';
+            foreach ($convertedImages as $imagePath) {
+                echo '<div class="col-md-3 text-center">';
+                echo '<input type="checkbox" name="images[]" value="' . $imagePath . '" class="form-check-input converted-image-checkbox">';
+                echo '<img src="' . $imagePath . '" class="img-thumbnail mb-2" alt="Converted Image">';
+                echo '</div>';
+            }
+            echo '</div>';
+            echo '<button type="submit" class="btn btn-success w-100 mt-3">Download Selected</button>';
+            echo '</form>';
+            echo '</div>';
+        } else {
+            echo '<div class="alert alert-warning mt-3">No valid images were uploaded for conversion.</div>';
+        }
+    }
+    ?>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Select All Checkbox
+    document.getElementById('selectAll').addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('.converted-image-checkbox');
+        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+    });
+</script>
 </body>
 </html>
