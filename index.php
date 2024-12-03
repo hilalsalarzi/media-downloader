@@ -118,6 +118,7 @@
 
             <button type="submit" class="btn-submit">Download Media</button>
         </form>
+        <button href="converter.php"> Converter</button>
     </div>
 
     <!-- Bootstrap 5 JS and dependencies -->
