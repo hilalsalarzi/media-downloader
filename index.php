@@ -4,23 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Media Downloader tool that allows users to download images, videos, and other media files from JSON, Excel, and text file links. Easy and fast bulk download solution.">
-    <meta name="keywords" content="media downloader, bulk download, download images, download videos, file downloader, data collection, e-commerce media, download tool">
-    <meta name="author" content="Hilal Ahmad">
-    <meta property="og:title" content="Media Downloader">
-    <meta property="og:description" content="Media Downloader tool that helps you download images, videos, and other media files from URLs provided in JSON, Excel, or text files.">
-    <meta property="og:url" content="http://downloader.onicbyte.com">
-    <meta property="og:image" content="path_to_image.jpg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Media Downloader">
-    <meta name="twitter:description" content="Download media files (images, videos) from various file formats like JSON, Excel, and Text with ease.">
-    <meta name="twitter:image" content="path_to_image.jpg">
-
     <title>Media Downloader - Bulk Download Images and Videos</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Custom styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
@@ -77,22 +63,6 @@
             font-size: 18px;
         }
     </style>
-    <!-- Structured data for SEO -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Media Downloader",
-        "url": "http://downloader.onicbyte.com",
-        "description": "Download media files such as images and videos from JSON, Excel, or Text file URLs.",
-        "author": {
-            "@type": "Person",
-            "name": "Hilal Ahmad"
-        },
-        "operatingSystem": "Web",
-        "applicationCategory": "File Downloading Tool"
-    }
-    </script>
 </head>
 
 <body>
@@ -111,6 +81,11 @@
                 <input type="url" name="singleLink" id="singleLink" class="form-control" placeholder="https://example.com/image.jpg">
             </div>
 
+            <div class="form-group">
+                <label for="fileName">File Name (Optional):</label>
+                <input type="text" name="fileName" id="fileName" class="form-control" placeholder="Enter file name (e.g., my-download)">
+            </div>
+
             <div class="form-group form-check">
                 <input type="checkbox" name="convertToWebP" id="convertToWebP" class="form-check-input">
                 <label for="convertToWebP" class="form-check-label">Convert to WebP</label>
@@ -119,8 +94,6 @@
             <button type="submit" class="btn-submit">Download Media</button>
         </form>
     </div>
-
-    <!-- Bootstrap 5 JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>

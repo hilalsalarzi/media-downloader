@@ -1,137 +1,104 @@
 <?php
-require 'assets/plugins/composer/vendor/autoload.php'; // Ensure correct path to PhpSpreadsheet
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Get file name input
+    $fileName = $_POST['fileName'] ?? 'download';
+    $fileName = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileName); // Sanitize file name
 
-use PhpOffice\PhpSpreadsheet\IOFactory;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $urls = [];
-    $convertToWebP = isset($_POST['convertToWebP']); // Check if the checkbox was selected
-
-    // Process single link input
-    if (!empty($_POST['singleLink'])) {
-        $urls[] = trim($_POST['singleLink']);
+    // Set upload directory
+    $uploadDir = 'uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
     }
 
-    // Process uploaded file
+    // Handle file upload
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-        $fileType = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
-        $uploadedFile = $_FILES['file']['tmp_name'];
+        $uploadedFile = $_FILES['file'];
+        $fileTempPath = $uploadedFile['tmp_name'];
+        $fileOriginalName = $uploadedFile['name'];
+        $fileExtension = pathinfo($fileOriginalName, PATHINFO_EXTENSION);
 
-        if ($fileType === 'json') {
-            $jsonData = file_get_contents($uploadedFile);
-            $urls = array_merge($urls, json_decode($jsonData, true) ?? []);
-        } elseif ($fileType === 'xlsx') {
-            $spreadsheet = IOFactory::load($uploadedFile);
-            $sheet = $spreadsheet->getActiveSheet();
-            foreach ($sheet->getRowIterator() as $row) {
-                $cell = $row->getCellIterator()->current();
-                $urls[] = trim($cell->getValue());
-            }
-        } elseif ($fileType === 'txt') {
-            $txtData = file($uploadedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $urls = array_merge($urls, array_map('trim', $txtData));
+        // Move the uploaded file to the uploads directory
+        $uploadedFilePath = $uploadDir . basename($fileOriginalName);
+        if (move_uploaded_file($fileTempPath, $uploadedFilePath)) {
+            echo "File uploaded successfully: " . $fileOriginalName . "<br>";
+
+            // Process the uploaded file (e.g., extract URLs from JSON/Excel/Text)
+            processFile($uploadedFilePath, $fileName);
         } else {
-            echo 'Unsupported file type.';
-            exit;
+            echo "Error moving uploaded file.";
         }
     }
 
-    // Validate URLs
-    $urls = array_filter($urls, fn($url) => filter_var($url, FILTER_VALIDATE_URL));
-    if (empty($urls)) {
-        echo 'No valid URLs provided.';
-        exit;
+    // Handle single link input
+    if (!empty($_POST['singleLink'])) {
+        $singleLink = $_POST['singleLink'];
+        echo "Processing single link: " . htmlspecialchars($singleLink) . "<br>";
+
+        // Download the single link
+        downloadMedia($singleLink, $fileName);
     }
 
-    function generateRandomString($length = 4) {
-        return substr(str_shuffle('0123456789'), 0, $length);
+    // Handle WebP conversion option
+    if (isset($_POST['convertToWebP'])) {
+        echo "WebP conversion option selected.<br>";
+        // Add WebP conversion logic here
     }
+} else {
+    echo "Invalid request.";
+}
 
-    function convertImageToWebP($sourcePath, $destinationPath, $quality = 80) {
-        $info = getimagesize($sourcePath);
-        if ($info === false) return false;
+// Function to process the uploaded file and download media
+function processFile($filePath, $fileName)
+{
+    $urls = [];
 
-        $mime = $info['mime'];
-        $image = null;
-
-        // Create an image resource based on MIME type
-        switch ($mime) {
-            case 'image/jpeg':
-                $image = imagecreatefromjpeg($sourcePath);
-                break;
-            case 'image/png':
-                $image = imagecreatefrompng($sourcePath);
-                imagepalettetotruecolor($image);
-                imagealphablending($image, true);
-                imagesavealpha($image, true);
-                break;
-            case 'image/gif':
-                $image = imagecreatefromgif($sourcePath);
-                break;
-            default:
-                return false; // Unsupported type
+    // Extract URLs based on file type
+    $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+    if ($fileExtension === 'json') {
+        $jsonData = file_get_contents($filePath);
+        $data = json_decode($jsonData, true);
+        if (is_array($data)) {
+            $urls = array_merge($urls, $data); // Assuming JSON is an array of URLs
         }
-
-        // Save the image as WebP
-        $result = imagewebp($image, $destinationPath, $quality);
-        imagedestroy($image); // Free memory
-        return $result;
+    } elseif ($fileExtension === 'xlsx') {
+        require 'vendor/autoload.php'; // Load PHPExcel or similar library
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+        foreach ($worksheet->getRowIterator() as $row) {
+            $cell = $row->getCellIterator()->current();
+            if ($cell) {
+                $urls[] = $cell->getValue();
+            }
+        }
+    } elseif ($fileExtension === 'txt') {
+        $urls = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     }
 
-    $mediaFolder = 'media_downloads';
-    $webpFolder = 'webp_downloads';
-    if (!is_dir($mediaFolder)) mkdir($mediaFolder, 0777, true);
-    if (!is_dir($webpFolder)) mkdir($webpFolder, 0777, true);
+    echo "Found " . count($urls) . " URLs in the file.<br>";
 
+    // Download each URL
     foreach ($urls as $url) {
-        $fileInfo = pathinfo($url);
-        $randomString = generateRandomString();
-        $filename = $fileInfo['filename'] . '-' . $randomString . '.' . $fileInfo['extension'];
-        $filePath = $mediaFolder . DIRECTORY_SEPARATOR . $filename;
+        downloadMedia($url, $fileName);
+    }
+}
 
-        $fileContent = file_get_contents($url);
-        if ($fileContent !== false) {
-            file_put_contents($filePath, $fileContent);
-
-            if ($convertToWebP) {
-                // Convert to WebP if the option is selected
-                $webpPath = $webpFolder . DIRECTORY_SEPARATOR . $fileInfo['filename'] . '-' . $randomString . '.webp';
-                if (!convertImageToWebP($filePath, $webpPath)) {
-                    echo "Failed to convert $filePath to WebP.\n";
-                }
-            }
-        }
+// Function to download a media file
+function downloadMedia($url, $fileName)
+{
+    $mediaDir = 'downloads/';
+    if (!is_dir($mediaDir)) {
+        mkdir($mediaDir, 0777, true);
     }
 
-    // Create a ZIP file for downloaded files (either original or WebP)
-    $zip = new ZipArchive();
-    $zipFileName = 'media_files-' . generateRandomString() . '.zip';
-    $folderToZip = $convertToWebP ? $webpFolder : $mediaFolder;
+    $filePath = $mediaDir . $fileName . '-' . basename($url);
+    $fileContent = file_get_contents($url);
 
-    if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-        $files = scandir($folderToZip);
-        foreach ($files as $file) {
-            if ($file !== '.' && $file !== '..') {
-                $zip->addFile($folderToZip . DIRECTORY_SEPARATOR . $file, $file);
-            }
-        }
-        $zip->close();
-
-        // Serve the ZIP file for download
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
-        header('Content-Length: ' . filesize($zipFileName));
-        readfile($zipFileName);
-
-        // Clean up temporary files
-        unlink($zipFileName);
-        array_map('unlink', glob("$mediaFolder/*.*"));
-        array_map('unlink', glob("$webpFolder/*.*"));
-        rmdir($mediaFolder);
-        rmdir($webpFolder);
-        exit;
+    if ($fileContent !== false) {
+        file_put_contents($filePath, $fileContent);
+        echo "Downloaded: " . htmlspecialchars($url) . " as " . basename($filePath) . "<br>";
     } else {
-        echo 'Failed to create zip file.';
+        echo "Failed to download: " . htmlspecialchars($url) . "<br>";
     }
 }
 ?>
