@@ -67,11 +67,12 @@
 
 <body>
     <div class="container">
-    <h1 style="display: flex; align-items: center; gap: 10px;">
-        Media Downloader
-        <a href="converter.php" style="text-decoration: none; color: blue; font-size: 0.8em;">
+    <a href="converter.php" style="text-decoration: none; color: blue; font-size: 0.8em; top-right:0px; end:0px;">
             Converter
         </a>
+    <h1 class="text-center">
+        Media Downloader
+       
     </h1>
         <form action="config.php" method="POST" enctype="multipart/form-data">
             <div class="form-group">

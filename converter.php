@@ -5,9 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Converter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .container{
+        max-width: 600px;
+            margin-top: 50px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
 </head>
 <body>
 <div class="container mt-5">
+<a href="index.php" style="text-decoration: none; color: blue; font-size: 0.8em; top-right:0px; end:0px;">
+            media Downloader
+        </a>
     <h1 class="text-center mb-4">Image Converter</h1>
     <form action="" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
