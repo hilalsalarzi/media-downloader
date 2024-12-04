@@ -70,7 +70,7 @@
     <h1 style="display: flex; align-items: center; gap: 10px;">
         Media Downloader
         <a href="converter.php" style="text-decoration: none; color: blue; font-size: 0.8em;">
-            Go To Converter
+            Converter
         </a>
     </h1>
         <form action="config.php" method="POST" enctype="multipart/form-data">
